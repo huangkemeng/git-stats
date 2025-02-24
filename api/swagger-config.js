@@ -7,8 +7,8 @@ const options = {
         "info": { "title": "GitLab 提交统计 API", "version": "1.0.0" },
         servers: [
             {
-                url: process.env.VERCEL_URL
-                    ? `https://${process.env.VERCEL_URL}`
+                url: process.env.VERCEL
+                    ? `https://git-stats.get200.cn`
                     : 'http://localhost:3000',
                 description: process.env.VERCEL ? '生产环境' : '本地开发'
             }
