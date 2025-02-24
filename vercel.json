@@ -1,0 +1,17 @@
+{
+    "version": 2,
+    "routes": [
+        {
+            "src": "/api/swagger-ui(.*)",
+            "dest": "/api/swagger-ui.js"
+        },
+        {
+            "src": "/api/api-docs.json",
+            "dest": "/api/swagger.json.js"
+        },
+        {
+            "src": "/api/commits",
+            "dest": "/api/commits.js"
+        }
+    ]
+}

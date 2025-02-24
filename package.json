@@ -1,4 +1,10 @@
 {
+  "name": "gitlab-stats",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node api/server.js",
+    "vercel-build": "npm install"
+  },
   "dependencies": {
     "axios": "^1.7.9",
     "cli-table3": "^0.6.5",
@@ -7,5 +13,11 @@
     "moment-timezone": "^0.5.47",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
+  },
+  "engines": {
+    "node": ">=21.x"
+  },
+  "devDependencies": {
+    "@vercel/node": "^5.1.8"
   }
 }

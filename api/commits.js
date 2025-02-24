@@ -1,8 +1,7 @@
-const express = require('express');
 const axios = require('axios');
 const moment = require('moment-timezone');
 const Table = require('cli-table3');
-const app = express();
+
 /**
  * @swagger
  * tags:
@@ -10,7 +9,6 @@ const app = express();
  *   description: 统计某个时间段内某些用户提交的天数和commit个数
  */
 
-app.use(express.json());
 
 // 获取用户ID
 async function getUserId(username, gitlabUrl, token) {
@@ -26,19 +24,25 @@ async function getUserId(username, gitlabUrl, token) {
     }
 }
 
+
+function parseFlexibleDate(startDate) {
+    return moment(startDate);
+}
+
 // 获取提交记录
 async function getCommits(userId, startDate, endDate, gitlabUrl, token) {
     let allCommits = [];
     let page = 1;
     let hasMore = true;
-
+    var start = parseFlexibleDate(startDate).format('YYYY-MM-DD HH:mm:ss');
+    var end = parseFlexibleDate(endDate).format('YYYY-MM-DD HH:mm:ss');
     while (hasMore) {
         const response = await axios.get(`${gitlabUrl}/api/v4/users/${userId}/events`, {
             headers: { 'Private-Token': token },
             params: {
                 action: 'pushed',
-                after: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
-                before: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
+                after: start,
+                before: end,
                 per_page: 100,
                 page: page++
             }
@@ -110,9 +114,8 @@ async function getCommits(userId, startDate, endDate, gitlabUrl, token) {
  *               code: 200
  *               data: []
  */
-app.get('/api/commits', async (req, res) => {
+module.exports = async (req, res) => {
     try {
-        debugger
         const { gitlabHost, privateToken, userIds, startDate, endDate } = req.query;
 
         // 验证参数
@@ -120,10 +123,10 @@ app.get('/api/commits', async (req, res) => {
             return res.status(400).send('Missing required parameters');
         }
 
-        // 处理日期
-        const start = startDate;
-        const end = endDate;
-        const users = userIds;
+        var users = userIds;
+        if (!Array.isArray(users)) {
+            users = [users]
+        }
 
         // 处理每个用户
         const results = [];
@@ -134,7 +137,7 @@ app.get('/api/commits', async (req, res) => {
                 continue;
             }
 
-            var commits = await getCommits(userId, start, end, gitlabHost, privateToken);
+            var commits = await getCommits(userId, startDate, endDate, gitlabHost, privateToken);
             commits = commits.filter(c => c.action_name !== 'deleted');
             const dateCounts = new Set();
 
@@ -171,9 +174,9 @@ app.get('/api/commits', async (req, res) => {
 
         results.forEach(row => table.push([row.user, row.totalDays, row.totalCommits]));
 
-        res.set('Content-Type', 'text/plain');
+        res.setHeader('Content-Type', 'text/plain');
         res.send(
-            `${moment(start).format('YYYY-MM-DD')} ~ ${moment(end).format('YYYY-MM-DD')} GitLab提交统计:\n\n` +
+            `${parseFlexibleDate(startDate).format('YYYY-MM-DD')} ~ ${parseFlexibleDate(endDate).format('YYYY-MM-DD')} GitLab提交统计:\n\n` +
             table.toString()
         );
 
@@ -181,8 +184,4 @@ app.get('/api/commits', async (req, res) => {
         console.error('API Error:', error);
         res.status(500).send('Internal Server Error');
     }
-});
-
-require("./swagger")(app);
-const PORT = process.env.PORT || 3003;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+};
